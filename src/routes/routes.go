@@ -10,6 +10,7 @@ import (
 func Setup(app *echo.Echo) {
 	api := app.Group("/api")
 
+	// ADMIN
 	admin := api.Group("/admin")
 
 	admin.POST("/register", controllers.Register)
@@ -32,4 +33,16 @@ func Setup(app *echo.Echo) {
 
 	orders := adminAuthenticated.Group("/orders")
 	orders.GET("", controllers.Orders)
+
+	// AMBASSADORS
+	ambassador := api.Group("/ambassador")
+
+	ambassador.POST("/register", controllers.Register)
+	ambassador.POST("/login:", controllers.Login)
+
+	ambassadorAuthenticated := ambassador.Group("", middlewares.IsAuthenticated)
+	ambassadorAuthenticated.POST("/logout", controllers.Logout)
+	ambassadorAuthenticated.GET("/user", controllers.User)
+	ambassadorAuthenticated.PUT("/users/info", controllers.UpdateInfo)
+	ambassadorAuthenticated.PUT("/users/password", controllers.UpdatePassword)
 }

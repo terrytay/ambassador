@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -38,7 +39,7 @@ func Register(c echo.Context) error {
 		FirstName:    data["first_name"],
 		LastName:     data["last_name"],
 		Email:        data["email"],
-		IsAmbassador: false,
+		IsAmbassador: strings.Contains(c.Path(), "/api/ambassador"),
 	}
 	if err := user.SetPassword(data["password"]); err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
