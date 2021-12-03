@@ -21,6 +21,7 @@ func Setup(app *echo.Echo) {
 	adminAuthenticated.PUT("/users/info", controllers.UpdateInfo)
 	adminAuthenticated.PUT("/users/password", controllers.UpdatePassword)
 	adminAuthenticated.GET("/ambassadors", controllers.Ambassador)
+	adminAuthenticated.GET("/users/:id/links", controllers.Link)
 
 	products := adminAuthenticated.Group("/products", middlewares.IsAuthenticated)
 	products.GET("", controllers.Products)
