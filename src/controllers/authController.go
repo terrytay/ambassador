@@ -61,7 +61,7 @@ func Login(c echo.Context) error {
 	var user models.User
 
 	database.DB.Where("email = ?", data["email"]).First(&user)
-	if user.ID == 0 {
+	if user.Id == 0 {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "invalid credentials",
 		})
@@ -77,7 +77,7 @@ func Login(c echo.Context) error {
 	expiresAt := time.Now().Add(time.Hour * 24)
 
 	payload := jwt.StandardClaims{
-		Subject:   strconv.Itoa(int(user.ID)),
+		Subject:   strconv.Itoa(int(user.Id)),
 		ExpiresAt: expiresAt.Unix(),
 	}
 
