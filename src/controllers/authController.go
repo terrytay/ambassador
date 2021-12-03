@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/terrytay/ambassador/src/database"
 	"github.com/terrytay/ambassador/src/middlewares"
@@ -75,14 +73,23 @@ func Login(c echo.Context) error {
 
 	}
 
-	expiresAt := time.Now().Add(time.Hour * 24)
+	isAmbassador := strings.Contains(c.Path(), "/api/ambassador")
+	var scope string
 
-	payload := jwt.StandardClaims{
-		Subject:   strconv.Itoa(int(user.Id)),
-		ExpiresAt: expiresAt.Unix(),
+	if isAmbassador {
+		scope = "ambassador"
+	} else {
+		scope = "admin"
 	}
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, payload).SignedString([]byte("secret"))
+	if !isAmbassador && user.IsAmbassador {
+		return c.JSON(http.StatusUnauthorized, echo.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	expiresAt := time.Now().Add(time.Hour * 24)
+	token, err := middlewares.GenerateJWT(user.Id, expiresAt, scope)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -95,6 +102,7 @@ func Login(c echo.Context) error {
 		Value:    token,
 		Expires:  expiresAt,
 		HttpOnly: true,
+		Path:     "/",
 	}
 
 	c.SetCookie(&cookie)
@@ -114,7 +122,12 @@ func User(c echo.Context) error {
 }
 
 func Logout(c echo.Context) error {
-	c.SetCookie(&http.Cookie{Name: "jwt", Value: ""})
+	c.SetCookie(&http.Cookie{
+		Name:    "jwt",
+		MaxAge:  -1,
+		Expires: time.Now().Add(-100 * time.Hour),
+		Path:    "/",
+	})
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "success",
 	})

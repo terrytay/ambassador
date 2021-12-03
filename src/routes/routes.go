@@ -38,7 +38,7 @@ func Setup(app *echo.Echo) {
 	ambassador := api.Group("/ambassador")
 
 	ambassador.POST("/register", controllers.Register)
-	ambassador.POST("/login:", controllers.Login)
+	ambassador.POST("/login", controllers.Login)
 
 	ambassadorAuthenticated := ambassador.Group("", middlewares.IsAuthenticated)
 	ambassadorAuthenticated.POST("/logout", controllers.Logout)
