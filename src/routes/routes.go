@@ -19,5 +19,5 @@ func Setup(app *echo.Echo) {
 	admin.GET("/user", controllers.User, middlewares.IsAuthenticated)
 	admin.PUT("/users/info", controllers.UpdateInfo, middlewares.IsAuthenticated)
 	admin.PUT("/users/password", controllers.UpdatePassword, middlewares.IsAuthenticated)
-
+	admin.GET("/ambassadors", controllers.Ambassador, middlewares.IsAuthenticated)
 }
