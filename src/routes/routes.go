@@ -26,4 +26,6 @@ func Setup(app *echo.Echo) {
 	products.GET("", controllers.Products)
 	products.GET("/:id", controllers.GetProduct)
 	products.POST("", controllers.CreateProduct)
+	products.PUT("/:id", controllers.UpdateProduct)
+	products.DELETE("/:id", controllers.DeleteProduct)
 }

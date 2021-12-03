@@ -22,7 +22,7 @@ func CreateProduct(c echo.Context) error {
 	var product models.Product
 
 	if err := c.Bind(&product); err != nil {
-		return c.JSON(http.StatusBadRequest, helpers.Error{Message: "invalid input"})
+		return c.JSON(http.StatusBadRequest, helpers.GenericResponse{Message: "invalid input"})
 	}
 
 	database.DB.Create(&product)
@@ -35,14 +35,45 @@ func GetProduct(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, helpers.Error{Message: "product not found"})
+		return c.JSON(http.StatusBadRequest, helpers.GenericResponse{Message: "product not found"})
 	}
 
 	database.DB.Where("id = ?", id).First(&product)
 
 	if product.Id == 0 {
-		return c.JSON(http.StatusNotFound, helpers.Error{Message: "product not found"})
+		return c.JSON(http.StatusNotFound, helpers.GenericResponse{Message: "product not found"})
 	}
 
 	return c.JSON(http.StatusOK, product)
+}
+
+func UpdateProduct(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helpers.GenericResponse{Message: "invalid id"})
+	}
+
+	var product models.Product
+	product.Id = uint(id)
+
+	if err = c.Bind(&product); err != nil {
+		return err
+	}
+
+	database.DB.Model(&product).Updates(&product)
+
+	var savedProduct models.Product
+	database.DB.Where("id = ?", id).First(&savedProduct)
+
+	return c.JSON(http.StatusOK, savedProduct)
+}
+
+func DeleteProduct(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helpers.GenericResponse{Message: "invalid id"})
+	}
+
+	database.DB.Model(&models.Product{}).Delete("id = ?", id)
+	return c.JSON(http.StatusOK, helpers.GenericResponse{Message: "success"})
 }

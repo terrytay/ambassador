@@ -1,5 +1,5 @@
 package helpers
 
-type Error struct {
+type GenericResponse struct {
 	Message interface{} `json:"message"`
 }
