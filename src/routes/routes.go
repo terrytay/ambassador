@@ -23,10 +23,13 @@ func Setup(app *echo.Echo) {
 	adminAuthenticated.GET("/ambassadors", controllers.Ambassador)
 	adminAuthenticated.GET("/users/:id/links", controllers.Link)
 
-	products := adminAuthenticated.Group("/products", middlewares.IsAuthenticated)
+	products := adminAuthenticated.Group("/products")
 	products.GET("", controllers.Products)
 	products.GET("/:id", controllers.GetProduct)
 	products.POST("", controllers.CreateProduct)
 	products.PUT("/:id", controllers.UpdateProduct)
 	products.DELETE("/:id", controllers.DeleteProduct)
+
+	orders := adminAuthenticated.Group("/orders")
+	orders.GET("", controllers.Orders)
 }
