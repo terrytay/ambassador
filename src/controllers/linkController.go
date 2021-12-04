@@ -20,12 +20,17 @@ func Link(c echo.Context) error {
 
 	var links []models.Link
 
-	database.DB.Where("user_id = ?", id).Find(&links)
+	database.DB.Find(&links, &models.Link{
+		UserId: uint(id),
+	})
 
 	for i, link := range links {
 		var orders []models.Order
 
-		database.DB.Where("code = ? and complete = true", link.Code).Find(&orders)
+		database.DB.Find(&orders, &models.Order{
+			Code:     link.Code,
+			Complete: true,
+		})
 
 		links[i].Orders = orders
 	}
@@ -64,4 +69,38 @@ func CreateLink(c echo.Context) error {
 	database.DB.Preload("User").Find(&link)
 
 	return c.JSON(http.StatusOK, link)
+}
+
+func Stats(c echo.Context) error {
+	id, _ := middlewares.GetUserId(c)
+
+	var links []models.Link
+
+	database.DB.Find(&links, &models.Link{
+		UserId: id,
+	})
+
+	var result []interface{}
+
+	var orders []models.Order
+
+	for _, link := range links {
+		database.DB.Preload("OrderItems").Find(&orders, &models.Order{
+			Code:     link.Code,
+			Complete: true,
+		})
+
+		var revenue float64 = 0
+		for _, order := range orders {
+			revenue += order.GetTotal()
+		}
+
+		result = append(result, echo.Map{
+			"code":    link.Code,
+			"count":   len(orders),
+			"revenue": revenue,
+		})
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
