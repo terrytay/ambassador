@@ -71,7 +71,14 @@ func UpdateProduct(c echo.Context) error {
 	var savedProduct models.Product
 	database.DB.Where("id = ?", id).First(&savedProduct)
 
+	go deleteCache("products_frontend")
+	go deleteCache("products_backend")
+
 	return c.JSON(http.StatusOK, savedProduct)
+}
+
+func deleteCache(key string) {
+	database.Cache.Del(context.Background(), key)
 }
 
 func DeleteProduct(c echo.Context) error {
@@ -106,6 +113,7 @@ func ProductsFrontend(c echo.Context) error {
 	return c.JSON(http.StatusOK, products)
 }
 
+// TODO: use more efficient search
 func ProductsBackend(c echo.Context) error {
 	var products []models.Product
 
