@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -151,5 +152,30 @@ func ProductsBackend(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, searchedProducts)
+	total := len(searchedProducts)
+	productsPerPage := 9
+	last_page := total/productsPerPage + 1
+
+	pageParam := c.QueryParam("page")
+	if pageParam == "" {
+		pageParam = "1"
+	}
+
+	page, _ := strconv.Atoi(pageParam)
+
+	if page > last_page {
+		page = last_page
+	}
+
+	var data []models.Product = searchedProducts
+
+	productsStart := (page - 1) * productsPerPage
+	productsEnd := math.Min(float64(page*productsPerPage), float64(total))
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data":      data[productsStart:int(productsEnd)],
+		"total":     total,
+		"page":      page,
+		"last_page": total/productsPerPage + 1,
+	})
 }
