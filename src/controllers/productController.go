@@ -33,6 +33,8 @@ func CreateProduct(c echo.Context) error {
 
 	database.DB.Create(&product)
 
+	go database.ClearCache("products_frontend", "products_backend")
+
 	return c.JSON(http.StatusOK, product)
 }
 
@@ -71,14 +73,9 @@ func UpdateProduct(c echo.Context) error {
 	var savedProduct models.Product
 	database.DB.Where("id = ?", id).First(&savedProduct)
 
-	go deleteCache("products_frontend")
-	go deleteCache("products_backend")
+	go database.ClearCache("products_frontend", "products_backend")
 
 	return c.JSON(http.StatusOK, savedProduct)
-}
-
-func deleteCache(key string) {
-	database.Cache.Del(context.Background(), key)
 }
 
 func DeleteProduct(c echo.Context) error {
@@ -88,6 +85,8 @@ func DeleteProduct(c echo.Context) error {
 	}
 
 	database.DB.Model(&models.Product{}).Delete("id = ?", id)
+	go database.ClearCache("products_frontend", "products_backend")
+
 	return c.JSON(http.StatusOK, helpers.GenericResponse{Message: "success"})
 }
 
