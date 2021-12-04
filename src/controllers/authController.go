@@ -118,7 +118,18 @@ func User(c echo.Context) error {
 	var user models.User
 	database.DB.Where("id = ?", id).First(&user)
 
-	return c.JSON(http.StatusOK, user)
+	isAmbassador := strings.Contains(c.Path(), "/api/ambassador")
+
+	if isAmbassador {
+		ambassador := models.Ambassador(user)
+		ambassador.CalculateRevenue(database.DB)
+		return c.JSON(http.StatusOK, ambassador)
+	}
+
+	admin := models.Admin(user)
+	admin.CalculateRevenue(database.DB)
+
+	return c.JSON(http.StatusOK, admin)
 }
 
 func Logout(c echo.Context) error {
