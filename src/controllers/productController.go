@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/terrytay/ambassador/src/database"
@@ -76,4 +79,29 @@ func DeleteProduct(c echo.Context) error {
 
 	database.DB.Model(&models.Product{}).Delete("id = ?", id)
 	return c.JSON(http.StatusOK, helpers.GenericResponse{Message: "success"})
+}
+
+func ProductsFrontend(c echo.Context) error {
+	var products []models.Product
+
+	var ctx = context.Background()
+	result, err := database.Cache.Get(ctx, "products_frontend").Result()
+
+	if err != nil {
+		database.DB.Find(&products)
+
+		bytes, err := json.Marshal(products)
+		if err != nil {
+			panic(err)
+		}
+
+		if errKey := database.Cache.Set(ctx, "products_frontend", bytes, 30*time.Minute).Err(); errKey != nil {
+			panic(errKey)
+		}
+	} else {
+		json.Unmarshal([]byte(result), &products)
+
+	}
+
+	return c.JSON(http.StatusOK, products)
 }
