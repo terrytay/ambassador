@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -95,13 +96,46 @@ func ProductsFrontend(c echo.Context) error {
 			panic(err)
 		}
 
-		if errKey := database.Cache.Set(ctx, "products_frontend", bytes, 30*time.Minute).Err(); errKey != nil {
-			panic(errKey)
-		}
+		database.Cache.Set(ctx, "products_frontend", bytes, 30*time.Minute)
 	} else {
 		json.Unmarshal([]byte(result), &products)
-
 	}
 
 	return c.JSON(http.StatusOK, products)
+}
+
+func ProductsBackend(c echo.Context) error {
+	var products []models.Product
+
+	var ctx = context.Background()
+	result, err := database.Cache.Get(ctx, "products_backend").Result()
+
+	if err != nil {
+		database.DB.Find(&products)
+
+		bytes, err := json.Marshal(products)
+		if err != nil {
+			panic(err)
+		}
+
+		database.Cache.Set(ctx, "products_backend", bytes, 30*time.Minute)
+	} else {
+		json.Unmarshal([]byte(result), &products)
+	}
+
+	var searchedProducts []models.Product
+
+	if s := c.QueryParam("s"); s != "" {
+		lower := strings.ToLower(s)
+		for _, product := range products {
+			if strings.Contains(strings.ToLower(product.Title), lower) ||
+				strings.Contains(strings.ToLower(product.Description), lower) {
+				searchedProducts = append(searchedProducts, product)
+			}
+		}
+	} else {
+		searchedProducts = products
+	}
+
+	return c.JSON(http.StatusOK, searchedProducts)
 }
