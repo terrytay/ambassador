@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/checkout/session"
 	"github.com/terrytay/ambassador/src/database"
 	"github.com/terrytay/ambassador/src/models"
 )
@@ -76,6 +78,8 @@ func CreateOrder(c echo.Context) error {
 		})
 	}
 
+	var lineItems []*stripe.CheckoutSessionLineItemParams
+
 	for _, requestProduct := range request.Products {
 		product := models.Product{}
 		product.Id = uint(requestProduct["product_id"])
@@ -99,9 +103,44 @@ func CreateOrder(c echo.Context) error {
 				"message": err,
 			})
 		}
+
+		lineItems = append(lineItems, &stripe.CheckoutSessionLineItemParams{
+			Name:        stripe.String(product.Title),
+			Description: stripe.String(product.Description),
+			Images:      []*string{stripe.String(product.Image)},
+			Amount:      stripe.Int64(int64(product.Price) * 100),
+			Currency:    stripe.String("sgd"),
+			Quantity:    stripe.Int64(int64(requestProduct["quantity"])),
+		})
+	}
+
+	stripe.Key = "sk_test_51K3kZ4CJjXVU2nWfPBXysSYnS4JZxTvd8NmxQcdpR1YM5OGsnyjG0tHXwUY40GamddqcZzICpWgoaHgYsgW9EK6F00USvXuv68"
+
+	params := stripe.CheckoutSessionParams{
+		SuccessURL:         stripe.String("http://localhost:5000/success?source={CHECKOUT_SESSION_ID}"),
+		CancelURL:          stripe.String("http://localhost:5000/error"),
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		LineItems:          lineItems,
+	}
+
+	source, err := session.New(&params)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": err,
+		})
+	}
+
+	order.TransactionId = source.ID
+
+	if err := tx.Save(&order).Error; err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": err,
+		})
 	}
 
 	tx.Commit()
 
-	return c.JSON(http.StatusOK, order)
+	return c.JSON(http.StatusOK, source)
 }
