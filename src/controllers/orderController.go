@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/smtp"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v72"
@@ -187,6 +189,11 @@ func CompleteOrder(c echo.Context) error {
 
 		database.Cache.ZIncrBy(context.Background(), "rankings", ambassadorRevenue, user.Name())
 
+		ambassadorMessage := []byte(fmt.Sprintf("You earned $%f from the link %s", ambassadorRevenue, order.Code))
+		smtp.SendMail("mailhog:1025", nil, "no-reply@ambassadors.com", []string{order.AmbassadorEmail}, ambassadorMessage)
+
+		adminMessage := []byte(fmt.Sprintf("Order #%d with a total of $%f has been completed", order.Id, adminRevenue))
+		smtp.SendMail("mailhog:1025", nil, "no-reply@ambassadors.com", []string{"txrrythk@gmail.com"}, adminMessage)
 	}(order)
 
 	return c.JSON(http.StatusOK, echo.Map{

@@ -13,7 +13,7 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/stripe/stripe-go/v72 v72.77.0 // indirect
+	github.com/stripe/stripe-go/v72 v72.77.0
 )
 
 require (
