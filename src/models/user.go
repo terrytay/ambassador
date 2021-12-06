@@ -29,6 +29,10 @@ func (u User) ComparePassword(password string) error {
 	return bcrypt.CompareHashAndPassword(u.Password, []byte(password))
 }
 
+func (u User) Name() string {
+	return u.FirstName + " " + u.LastName
+}
+
 type Ambassador User
 type Admin User
 

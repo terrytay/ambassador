@@ -49,4 +49,5 @@ func Setup(app *echo.Echo) {
 	ambassadorAuthenticated.PUT("/users/password", controllers.UpdatePassword)
 	ambassadorAuthenticated.POST("/links", controllers.CreateLink)
 	ambassadorAuthenticated.GET("/stats", controllers.Stats)
+	ambassadorAuthenticated.GET("/rankings", controllers.Rankings)
 }
