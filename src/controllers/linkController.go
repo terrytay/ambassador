@@ -104,3 +104,15 @@ func Stats(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, result)
 }
+
+func GetLink(c echo.Context) error {
+	code := c.Param("code")
+
+	link := models.Link{}
+
+	database.DB.Preload("User").Preload("Products").First(&link, models.Link{
+		Code: code,
+	})
+
+	return c.JSON(http.StatusOK, link)
+}

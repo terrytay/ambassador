@@ -50,4 +50,8 @@ func Setup(app *echo.Echo) {
 	ambassadorAuthenticated.POST("/links", controllers.CreateLink)
 	ambassadorAuthenticated.GET("/stats", controllers.Stats)
 	ambassadorAuthenticated.GET("/rankings", controllers.Rankings)
+
+	checkout := api.Group("/checkout")
+	checkout.GET("/links/:code", controllers.GetLink)
+	checkout.POST("/orders", controllers.CreateOrder)
 }
