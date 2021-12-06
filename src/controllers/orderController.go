@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -143,4 +144,52 @@ func CreateOrder(c echo.Context) error {
 	tx.Commit()
 
 	return c.JSON(http.StatusOK, source)
+}
+
+func CompleteOrder(c echo.Context) error {
+	var data map[string]string
+
+	if err := c.Bind(&data); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": err,
+		})
+	}
+
+	order := models.Order{}
+
+	database.DB.Preload("OrderItems").First(&order, models.Order{
+		TransactionId: data["source"],
+	})
+
+	if order.Id == 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "order not found",
+		})
+	}
+
+	order.Complete = true
+
+	database.DB.Save(&order)
+
+	go func(order models.Order) {
+		ambassadorRevenue := 0.0
+		adminRevenue := 0.0
+
+		for _, item := range order.OrderItems {
+			ambassadorRevenue += item.AmbassadorRevenue
+			adminRevenue += item.AdminRevenue
+		}
+
+		user := models.User{}
+		user.Id = order.UserId
+
+		database.DB.Find(&user)
+
+		database.Cache.ZIncrBy(context.Background(), "rankings", ambassadorRevenue, user.Name())
+
+	}(order)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "success",
+	})
 }

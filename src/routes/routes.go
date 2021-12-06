@@ -54,4 +54,5 @@ func Setup(app *echo.Echo) {
 	checkout := api.Group("/checkout")
 	checkout.GET("/links/:code", controllers.GetLink)
 	checkout.POST("/orders", controllers.CreateOrder)
+	checkout.POST("/orders/confirm", controllers.CompleteOrder)
 }
